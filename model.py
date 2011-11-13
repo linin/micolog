@@ -1,8 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
 import os,logging
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-from google.appengine.dist import use_library
-use_library('django', '1.2')
 from google.appengine.ext import db
 from google.appengine.ext.db import Model as DBModel
 from google.appengine.api import memcache
@@ -868,7 +866,9 @@ def InitBlogData():
 
     entry=Entry(title="Hello world!".decode('utf8'))
     entry.content='<p>Welcome to micolog %s. This is your first post. Edit or delete it, then start blogging!</p>'%g_blog.version
+    entry.slug='welcome_to_micolog'
     entry.save(True)
+
     link=Link(href='http://xuming.net',linktext="Xuming's blog".decode('utf8'))
     link.put()
     link=Link(href='http://eric.cloud-mes.com/',linktext="Eric Guo's blog".decode('utf8'))

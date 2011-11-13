@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import os,logging
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-from google.appengine.dist import use_library
-use_library('django', '1.2')
 import functools
 from google.appengine.api import users
 from google.appengine.ext import webapp
@@ -21,6 +19,8 @@ import urllib
 import traceback
 import micolog_template
 
+micolog_template.register_template_library('app.filter')
+micolog_template.register_template_library('app.recurse')
 
 logging.info('module base reloaded')
 def urldecode(value):
@@ -224,14 +224,9 @@ class Pager(object):
 
 
 class BaseRequestHandler(webapp.RequestHandler):
-    def __init__(self):
-        self.current='home'
-
-##	def head(self, *args):
-##		return self.get(*args)
-
     def initialize(self, request, response):
         webapp.RequestHandler.initialize(self, request, response)
+        self.current='home'
         os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
         from model import g_blog,User
         self.blog = g_blog

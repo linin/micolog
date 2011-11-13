@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-from google.appengine.dist import use_library
-use_library('django', '1.2')
 import wsgiref.handlers
 from django.conf import settings
 settings._target = None
@@ -232,8 +230,8 @@ class admin_do_action(base.BaseRequestHandler):
 
 
 class admin_tools(base.BaseRequestHandler):
-    def __init__(self):
-        base.BaseRequestHandler.__init__(self)
+    def initialize(self, request, response):
+        base.BaseRequestHandler.initialize(self, request, response)
         self.current="config"
 
     @base.requires_admin
@@ -242,8 +240,8 @@ class admin_tools(base.BaseRequestHandler):
 
 
 class admin_sitemap(base.BaseRequestHandler):
-    def __init__(self):
-        base.BaseRequestHandler.__init__(self)
+    def initialize(self, request, response):
+        base.BaseRequestHandler.initialize(self, request, response)
         self.current="config"
 
     @base.requires_admin
@@ -283,8 +281,8 @@ class admin_sitemap(base.BaseRequestHandler):
         self.render2('views/admin/sitemap.html',{})
 
 class admin_import(base.BaseRequestHandler):
-    def __init__(self):
-        base.BaseRequestHandler.__init__(self)
+    def initialize(self, request, response):
+        base.BaseRequestHandler.initialize(self, request, response)
         self.current='config'
 
     @base.requires_admin
@@ -330,7 +328,8 @@ class admin_import(base.BaseRequestHandler):
 ##			self.render2('views/admin/import.html',{'error':'import faiure.'})
 
 class admin_setup(base.BaseRequestHandler):
-    def __init__(self):
+    def initialize(self, request, response):
+        base.BaseRequestHandler.initialize(self, request, response)
         self.current='config'
 
     @base.requires_admin
@@ -380,8 +379,8 @@ class admin_setup(base.BaseRequestHandler):
         self.render2('views/admin/setup.html',vals)
 
 class admin_entry(base.BaseRequestHandler):
-    def __init__(self):
-        base.BaseRequestHandler.__init__(self)
+    def initialize(self, request, response):
+        base.BaseRequestHandler.initialize(self, request, response)
         self.current='write'
 
     @base.requires_admin
@@ -736,8 +735,8 @@ class admin_link(base.BaseRequestHandler):
                     self.render2('views/admin/link.html',vals)
 
 class admin_category(base.BaseRequestHandler):
-    def __init__(self):
-        base.BaseRequestHandler.__init__(self)
+    def initialize(self, request, response):
+        base.BaseRequestHandler.initialize(self, request, response)
         self.current='categories'
 
     @base.requires_admin
@@ -855,8 +854,8 @@ class admin_authors(base.BaseRequestHandler):
             self.redirect('/admin/authors')
 
 class admin_author(base.BaseRequestHandler):
-    def __init__(self):
-        base.BaseRequestHandler.__init__(self)
+    def initialize(self, request, response):
+        base.BaseRequestHandler.initialize(self, request, response)
         self.current='authors'
 
     @base.requires_admin
@@ -909,8 +908,8 @@ class admin_author(base.BaseRequestHandler):
                     self.render2('views/admin/author.html',vals)
 
 class admin_plugins(base.BaseRequestHandler):
-    def __init__(self):
-        base.BaseRequestHandler.__init__(self)
+    def initialize(self, request, response):
+        base.BaseRequestHandler.initialize(self, request, response)
         self.current='plugins'
 
     @base.requires_admin
@@ -931,8 +930,8 @@ class admin_plugins(base.BaseRequestHandler):
             self.render2('views/admin/plugins.html',vals)
 
 class admin_plugins_action(base.BaseRequestHandler):
-    def __init__(self):
-        base.BaseRequestHandler.__init__(self)
+    def initialize(self, request, response):
+        base.BaseRequestHandler.initialize(self, request, response)
         self.current='plugins'
 
     @base.requires_admin
@@ -1038,8 +1037,8 @@ class UploadEx(base.BaseRequestHandler):
         self.write(simplejson.dumps({'name':media.name,'size':media.size,'id':str(media.key())}))
 
 class FileManager(base.BaseRequestHandler):
-    def __init__(self):
-        base.BaseRequestHandler.__init__(self)
+    def initialize(self, request, response):
+        base.BaseRequestHandler.initialize(self, request, response)
         self.current = 'files'
 
     @base.requires_admin

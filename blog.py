@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 import cgi, os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-from google.appengine.dist import use_library
-use_library('django', '1.2')
 import wsgiref.handlers
 
 # Google App Engine imports.
@@ -655,8 +653,6 @@ def getZipHandler(**args):
     return ('/xheditor/(.*)',zipserve.make_zip_handler('''D:\\Projects\\eric-guo\\plugins\\xheditor\\xheditor.zip'''))
 
 def main():
-    webapp.template.register_template_library('app.filter')
-    webapp.template.register_template_library('app.recurse')
     urls=	[('/media/([^/]*)/{0,1}.*',getMedia),
             ('/checkimg/', CheckImg),
             ('/checkcode/', CheckCode),
@@ -670,7 +666,7 @@ def main():
             ('/category/(.*)',entriesByCategory),
             ('/(\d{4})/(\d{1,2})',archive_by_month),
             ('/tag/(.*)',entriesByTag),
-            #('/\?p=(?P<postid>\d+)',SinglePost),
+            ('/\?p=(?P<postid>\d+)',SinglePost),
             ('/', MainPage),
             ('/do/(\w+)', do_action),
             ('/e/(.*)',Other),
