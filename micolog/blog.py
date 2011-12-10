@@ -9,11 +9,11 @@ import wsgiref.handlers
 from datetime import timedelta
 import random
 from django.utils import simplejson
-import filter as myfilter
+import micolog.filter as myfilter
 from app.safecode import Image
 from app.gmemsess import Session
-from base import *
-from model import *
+from micolog.base import *
+from micolog.model import *
 from django.utils.translation import ugettext as _
 
 ##os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'

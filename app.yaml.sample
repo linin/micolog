@@ -28,29 +28,29 @@ handlers:
   static_dir: static
 
 - url: /rpc|/xmlrpc\.php|/rpc/.*
-  script: api_rpc.py
+  script: micolog/api_rpc.py
 
 - url: /themes/.*
-  script: theme_files.py
+  script: micolog/theme.py
 
 - url: /myadmin/.*|/myadmin
   script: $PYTHON_LIB/google/appengine/ext/admin
   login: admin
 
 - url: /admin/post|/admin/entries/(post|page)|/admin/links|/admin/categories|/admin/comments
-  script: admin.py
+  script: micolog/admin.py
   login: required
 
 - url: /admin/{0,1}
-  script: admin.py
+  script: micolog/admin.py
   login: required
 
 - url: /admin/link|/admin/category|/admin/(post|page)|/admin/lang|/admin/filemanager|/admin/upload|/admin/uploadex
-  script: admin.py
+  script: micolog/admin.py
   login: required
 
 - url: /admin/.*
-  script: admin.py
+  script: micolog/admin.py
   login: admin
   
 - url: /remote_api
@@ -58,5 +58,5 @@ handlers:
   login: admin
 
 - url: /.*
-  script: blog.py
+  script: micolog/blog.py
 
