@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 import os,logging
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-import functools
+import functools,webapp2
 from google.appengine.api import users
-from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.api import memcache
 ##import app.webapp as webapp2
 from django.template import TemplateDoesNotExist
-from django.conf import settings
-settings._target = None
+#from django.conf import settings
+#settings._target = None
 #from model import g_blog,User
 #activate(g_blog.language)
 from google.appengine.api import taskqueue
@@ -17,23 +15,7 @@ from mimetypes import types_map
 from datetime import datetime
 import urllib
 import traceback
-import micolog_template
-
-micolog_template.register_template_library('app.filter')
-micolog_template.register_template_library('app.recurse')
-
-logging.info('module base reloaded')
-def urldecode(value):
-    return  urllib.unquote(urllib.unquote(value)).decode('utf8')
-    #return  urllib.unquote(value).decode('utf8')
-
-def urlencode(value):
-    return urllib.quote(value.encode('utf8'))
-
-def sid():
-    now=datetime.datetime.now()
-    return now.strftime('%y%m%d%H%M%S')+str(now.microsecond)
-
+import template
 
 def requires_admin(method):
     @functools.wraps(method)
@@ -57,6 +39,7 @@ def printinfo(method):
             print x
         return method(self, *args, **kwargs)
     return wrapper
+
 #only ajax methed allowed
 def ajaxonly(method):
     @functools.wraps(method)
@@ -76,113 +59,6 @@ def hostonly(method):
         else:
             self.error(404)
     return wrapper
-
-def format_date(dt):
-    return dt.strftime('%a, %d %b %Y %H:%M:%S GMT')
-
-def cache(key="",time=3600):
-    def _decorate(method):
-        def _wrapper(*args, **kwargs):
-            from model import g_blog
-            if not g_blog.enable_memcache:
-                method(*args, **kwargs)
-                return
-
-            request=args[0].request
-            response=args[0].response
-            skey=key+ request.path_qs
-            #logging.info('skey:'+skey)
-            html= memcache.get(skey)
-            #arg[0] is BaseRequestHandler object
-
-            if html:
-                logging.info('cache:'+skey)
-                response.last_modified =html[1]
-                ilen=len(html)
-                if ilen>=3:
-                    response.set_status(html[2])
-                if ilen>=4:
-                    for skey,value in html[3].items():
-                        response.headers[skey]=value
-                response.out.write(html[0])
-            else:
-                if 'last-modified' not in response.headers:
-                    response.last_modified = format_date(datetime.utcnow())
-
-                method(*args, **kwargs)
-                result=response.out.getvalue()
-                status_code = response._Response__status[0]
-                logging.debug("Cache:%s"%status_code)
-                memcache.set(skey,(result,response.last_modified,status_code,response.headers),time)
-
-        return _wrapper
-    return _decorate
-
-#-------------------------------------------------------------------------------
-class PingbackError(Exception):
-    """Raised if the remote server caused an exception while pingbacking.
-    This is not raised if the pingback function is unable to locate a
-    remote server.
-    """
-
-    _ = lambda x: x
-    default_messages = {
-        16: _(u'source URL does not exist'),
-        17: _(u'The source URL does not contain a link to the target URL'),
-        32: _(u'The specified target URL does not exist'),
-        33: _(u'The specified target URL cannot be used as a target'),
-        48: _(u'The pingback has already been registered'),
-        49: _(u'Access Denied')
-    }
-    del _
-
-    def __init__(self, fault_code, internal_message=None):
-        Exception.__init__(self)
-        self.fault_code = fault_code
-        self._internal_message = internal_message
-
-    def as_fault(self):
-        """Return the pingback errors XMLRPC fault."""
-        return Fault(self.fault_code, self.internal_message or
-                     'unknown server error')
-
-    @property
-    def ignore_silently(self):
-        """If the error can be ignored silently."""
-        return self.fault_code in (17, 33, 48, 49)
-
-    @property
-    def means_missing(self):
-        """If the error means that the resource is missing or not
-        accepting pingbacks.
-        """
-        return self.fault_code in (32, 33)
-
-    @property
-    def internal_message(self):
-        if self._internal_message is not None:
-            return self._internal_message
-        return self.default_messages.get(self.fault_code) or 'server error'
-
-    @property
-    def message(self):
-        msg = self.default_messages.get(self.fault_code)
-        if msg is not None:
-            return _(msg)
-        return _(u'An unknown server error (%s) occurred') % self.fault_code
-
-class util:
-    @classmethod
-    def do_trackback(cls, tbUrl=None, title=None, excerpt=None, url=None, blog_name=None):
-        taskqueue.add(url='/admin/do/trackback_ping',
-            params={'tbUrl': tbUrl,'title':title,'excerpt':excerpt,'url':url,'blog_name':blog_name})
-
-    #pingback ping
-    @classmethod
-    def do_pingback(cls,source_uri, target_uri):
-        taskqueue.add(url='/admin/do/pingback_ping',
-            params={'source': source_uri,'target':target_uri})
-
 
 
 ##cache variable
@@ -223,13 +99,87 @@ class Pager(object):
         return (results, links)
 
 
-class BaseRequestHandler(webapp.RequestHandler):
+
+class LangIterator:
+    def __init__(self, path='locale'):
+        self.iterating = False
+        self.path = path
+        self.list = []
+        for value in  os.listdir(self.path):
+            if os.path.isdir(os.path.join(self.path, value)):
+                if os.path.exists(os.path.join(self.path, value, 'LC_MESSAGES')):
+                    try:
+                        lang = open(os.path.join(self.path, value, 'language')).readline()
+                        self.list.append({'code':value, 'lang':lang})
+                    except:
+                        self.list.append( {'code':value, 'lang':value})
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if not self.iterating:
+            self.iterating = True
+            self.cursor = 0
+
+        if self.cursor >= len(self.list):
+            self.iterating = False
+            raise StopIteration
+        else:
+            value = self.list[self.cursor]
+            self.cursor += 1
+            return value
+
+    def getlang(self, language):
+        from django.utils.translation import  to_locale
+        for item in self.list:
+            if item['code'] == language or item['code'] == to_locale(language):
+                return item
+        return {'code':'en_US', 'lang':'English'}
+
+
+def Sitemap_NotifySearch():
+    """ Send notification of the new Sitemap(s) to the search engines. """
+
+
+    url = g_blog.baseurl+"/sitemap"
+
+    # Cycle through notifications
+    # To understand this, see the comment near the NOTIFICATION_SITES comment
+    for ping in settings.NOTIFICATION_SITES:
+        query_map = ping[3]
+        query_attr = ping[5]
+        query_map[query_attr] = url
+        query = urllib.urlencode(query_map)
+        notify = urlparse.urlunsplit((ping[0], ping[1], ping[2], query, ping[4]))
+        # Send the notification
+        logging.info('Notifying search engines. %s'%ping[1])
+        logging.info('url: %s'%notify)
+        try:
+            result = urlfetch.fetch(notify)
+            if result.status_code == 200:
+                logging.info('Notify Result: %s' % result.content)
+            if result.status_code == 404:
+                logging.info('HTTP error 404: Not Found')
+                logging.warning('Cannot contact: %s' % ping[1])
+
+        except :
+            logging.error('Cannot contact: %s' % ping[1])
+
+
+class BaseRequestHandler(webapp2.RequestHandler):
+
+
+
+##	def head(self, *args):
+##		return self.get(*args)
+
     def initialize(self, request, response):
-        webapp.RequestHandler.initialize(self, request, response)
         self.current='home'
+        webapp2.RequestHandler.initialize(self, request, response)
         os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-        from model import g_blog,User
-        self.blog = g_blog
+        from model import User,Blog
+        self.blog = Blog.getBlog()
         self.login_user = users.get_current_user()
         self.is_login = (self.login_user != None)
         self.loginurl=users.create_login_url(self.request.uri)
@@ -360,3 +310,4 @@ class BaseRequestHandler(webapp.RequestHandler):
         else:
             self.redirect(redirect_url)
             return False
+
