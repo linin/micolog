@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import  os,sys,stat
-os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
+#os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
 import wsgiref.handlers
 from mimetypes import types_map
 from datetime import  timedelta
@@ -8,6 +8,7 @@ from google.appengine.ext.webapp import template
 from google.appengine.ext.zipserve import *
 sys.path.append('modules')
 from model import *
+from settings import *
 
 # Handlers
 
@@ -22,8 +23,8 @@ class Theme:
         self.name = name
         self.mapping_cache = {}
         self.dir = '/themes/%s' % name
-        self.viewdir = os.path.join(rootpath, 'view')
-        self.server_dir = os.path.join(rootpath, 'themes', self.name)
+        self.viewdir = os.path.join(ROOT_PATH, 'view')
+        self.server_dir = os.path.join(ROOT_PATH, 'themes', self.name)
         if os.path.exists(self.server_dir):
             self.isZip = False
         else:
